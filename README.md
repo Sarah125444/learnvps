@@ -82,4 +82,133 @@
 
 - 每次的密码登录是不安全的，需要更改登录方式，将密码登录功能改为使用公私钥进行登录，设置完之后，将密码登录的方式彻底关闭。
 
-- 接着刚刚的`curl api.ipify.org`之后的命令是`exit`先退出这个电脑	
+- 接着刚刚的`curl api.ipify.org`之后的命令是`exit`先退出这个电脑
+
+- 输入以下代码：
+
+  ```javascript
+  #输入这个命令后会有一个选择 意思是是否需要把生成的公私钥保存到一个文件/.ssh/id_rsa里面 
+  #如果已经存在id_rsa，会问你是否需要覆盖 选择NO
+  ssh-keygen
+  ```
+
+- 输入下面代码：
+
+  ```javascript
+  # 这个命令的意思是把上面生成的密钥复制到你的那台远程机器上 让远程电脑设定并登陆 并信任这个公钥
+  ssh-copy-id root@muee.me
+  ```
+
+- 输入下面代码：
+
+  ```javascript
+  # 尝试再次登陆这个机器 看下是否还需要输入密码 如果不需要输入密码就登陆成功 就说明刚刚上面的几步操作成功
+  ssh root@muee.me
+  ```
+
+- 在远程机器上有一个文件夹`.ssh`里面有个文件`authorized_keys`，这个文件里面存放了远程机器信任的公钥列表。
+
+- 可以输入命令`cd .ssh   => l  => vi authorized_keys`进入这个文件看到复制过来的公钥
+
+#### 关闭密码功能
+
+- 经过上面的步骤已经将公私钥登陆的方式设置好了，这时候我们再去将密码登录功能进行关闭
+
+- 可以直接搜索`ssh 关闭密码功能登录`，找到相关的信息。
+
+- 先登录到远程机器
+
+  ```javascript
+  ssh root@muee.me
+  ```
+
+  
+
+- 将/etc/ssh/sshd_config，里面的PasswordAuthenticatiion改为no,ChallengResponseAuththentication改为no,然后**重合sshd（service sshd restart）**后就可以了。
+
+  ```javascript
+  # 进入这个文件 按 i 这个键进入输入模式 找到上面需要更改的两个地方进行更改 更改完之后按 esc 键退出输入模式
+  # 然后再按 :wq! 保存并退出这个文件 就改好了，一定要记得重启 否则不会生效 
+  vi /etc/ssh/sshd_config
+  ```
+
+- 经过上面的步骤，我们已经成功的关闭了密码功能，不用再担心被黑客黑掉
+
+#### 修改默认端口号
+
+- 系统默认端口号是22，为了避免黑客撞库攻击，我们应该将端口号设置为其他的端口号（小于65538的数字都可以）
+
+- 再次进入文件：
+
+  ```javascript
+  #还是和上步操作方法一样 找到port 去掉# 然后直接修改好保存并退出 然后重启一下服务重合服务：sshd（service sshd restart）就生效了
+  vi /etc/ssh/sshd_config
+  ```
+
+#### 快捷登陆方式
+
+- 我们现在登陆需要输入`ssh root@muee.me`这个命令，实际上可以直接`ssh m`这个命令登陆。
+
+- 先输入`exit`退出远程机器
+
+- 退出远程机器之后，输入` cd ~/.ssh/`进入.ssh文件夹下，找到config文件，如果没有，可以自己新建一个这个名字的文件，`vi config`进入文件输入以下内容：
+
+  ```javascript
+  HOST m  # 别名 想要以什么名字登陆 ，字母和数字都可以
+  	HostName muee.me #真正的域名
+    User root #用户名
+    Port 10086 #端口号 小于65538都可以
+  
+  ```
+
+- 然后保存退出。重新用设置的`ssh m`来进行登录，如果登录成功，表示这个步骤设置成功。
+
+#### 装Node软件
+
+##### 第一种方法：
+
+- 很遗憾node这个不是自带的，需要自己装，可以运行`node -v`会发现提示`Command  'node' not found,but can be installed with: apt install nodejs``,意思是可以用`apt install nodejs`来装node，但是使用这个安装node并不是最新版的，我们需要自己手动安装最新版本。
+
+- 先找到node官网：https://nodejs.org/en/
+
+- 找到`Other Downloads`即下面这个网址：https://nodejs.org/en/download/current/
+
+- 往下拉找到：[Installing Node.js via package manager](https://nodejs.org/en/download/package-manager/)
+
+- 点进去之后找到[Debian and Ubuntu based Linux distributions, Enterprise Linux/Fedora and Snap packages](https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions-enterprise-linux-fedora-and-snap-packages)
+
+- 找到[Official Node.js binary distributions](https://github.com/nodesource/distributions/blob/master/README.md) 会进入到https://github.com/nodesource/distributions/blob/master/README.md
+
+- 找到Installation instructions，下面就是nodejs的版本，然后会看到相对应版本的各种命令代码：
+
+  ```javascript
+  # Using Ubuntu
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+  ```
+
+- 搞完上面这个命令之后就可以装上最新版本的nodejs
+
+- 输入`node -v`测试是否有显示版本号，如果显示版本号说明成功装上。
+
+##### 第二种方法
+
+- 谷歌搜索`nvm`,或者直接进入这个网址https://github.com/nvm-sh/nvm，找到`Install & Update script`，复制下面的命令：
+
+  ```javascript
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+  ```
+
+- 输入这个命令之后，输入`exit`退出远程机器，然后重新进入远程机器，输入`nvm`看到一大堆信息就表示成功了。
+
+- 装了nvm之后会把之前装的node版本替换掉，输入以下命令再替换回来
+
+  ```javascript
+  nvm install node@12.10.1 
+  ```
+
+- 再输入`node -v`就会发现已经替换回到最新版本12.10,1，再输入`npm -v`会发现这个也变成最新的版本。
+
+以上步骤就完成了node的安装。
+
+
